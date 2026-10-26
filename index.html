@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TrustCheck — Review Intelligence</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <aside>
+    <div class="brand">◈ TrustCheck<span>.</span></div>
+    <p class="workspace">REVIEW INTELLIGENCE LAB</p>
+    <nav aria-label="Main navigation">
+      <button data-page="overview" class="active">▦ &nbsp; Overview</button>
+      <button data-page="reviews">☰ &nbsp; Reviews</button>
+      <button data-page="businesses">▤ &nbsp; Businesses</button>
+      <button data-page="reviewers">♙ &nbsp; Reviewers</button>
+      <button data-page="database">▥ &nbsp; Database</button>
+    </nav>
+    <div class="sidebar-note"><b>● LOCAL MYSQL</b><p>Academic project<br>All review data is synthetic.</p></div>
+  </aside>
+  <main>
+    <header><span>Workspace / <b id="breadcrumb">Overview</b></span><span class="connection">● Local MySQL</span></header>
+    <div class="content">
+      <div class="heading">
+        <div><small class="eyebrow">TRUSTCHECK / REVIEW INTELLIGENCE</small><h1 id="title">A clearer picture of trust.</h1><p id="subtitle">Spot suspicious reviews. Understand the patterns. Make better decisions.</p></div>
+        <div class="actions"><button id="export">↓ Export data</button><button id="add" class="primary">+ Add review</button></div>
+      </div>
+      <div class="banner">● &nbsp; Demo environment <span>All businesses, accounts, and reviews are synthetic.</span></div>
+      <p id="message" role="status"></p>
+      <section id="overview">
+        <div id="stats" class="stats"></div>
+        <div class="chart-grid">
+          <article class="card"><h2>Review activity</h2><p>Daily volume · October 2026 · Hover over a bar for details.</p><div class="legend">■ Low / medium risk <span>■ High risk</span></div><div id="chart" class="chart"></div><div class="chart-caption">01 Oct <span>13 Oct</span><span>26 Oct</span></div></article>
+          <article class="card"><h2>Risk distribution</h2><p>Signals beyond the star rating.</p><div id="donut" class="donut"><div><strong id="total">0</strong><small>reviews analyzed</small></div></div><div id="distribution"></div></article>
+        </div>
+        <article class="card"><div class="section-heading"><div><h2>Reviews to investigate</h2><p>The highest scores in your current dataset.</p></div><button id="view-all">View all reviews ↗</button></div><div id="top-reviews" class="table-wrap"></div></article>
+      </section>
+      <section id="reviews" hidden>
+        <article class="card"><div class="section-heading"><div><h2>Review explorer</h2><p>Search the full dataset, then open a review to inspect its score.</p></div></div><div class="filters"><input id="search" aria-label="Search reviews" placeholder="Search business, account, or review…"><select id="risk" aria-label="Filter by risk"><option>All reviews</option><option>High risk</option><option>Watchlist</option><option>Low risk</option></select></div><div id="review-table" class="table-wrap"></div></article>
+      </section>
+      <section id="businesses" hidden><div id="business-list" class="grid"></div></section>
+      <section id="reviewers" hidden><article class="card"><h2>Reviewer accounts</h2><div id="reviewer-list" class="table-wrap"></div></article></section>
+      <section id="database" hidden>
+        <article class="card"><h2>A relational foundation for review integrity.</h2><p>MySQL · InnoDB · Primary keys · Foreign keys · Indexed queries</p><div class="schema"><div><h3>businesses</h3><code>id PRIMARY KEY<br>name · category · city</code></div><div><h3>reviews</h3><code>id PRIMARY KEY<br>business_id → businesses.id<br>reviewer_id → reviewers.id<br>rating · body · posted · status</code></div><div><h3>reviewers</h3><code>id PRIMARY KEY<br>name · joined</code></div></div><p><b>Relationships:</b> One business has many reviews. One reviewer can write many reviews. The audit table records database changes.</p></article>
+        <article class="card"><h2>How the score works</h2><div class="rules"><p><b>25 points · Review burst</b> At least 5 other reviews of the business within ±1 hour.</p><p><b>25 points · Similar wording</b> At least 2 other reviews have ≥70% shared unique words.</p><p><b>20 points · Rating surge</b> Mean within ±1 day exceeds the earlier mean by >1 star; minimum 5 reviews in each group.</p><p><b>20 points · Repeat reviewer</b> One account reviews the same business at least 3 times.</p><p><b>10 points · Rating mismatch</b> Rating differs from the earlier mean by ≥2 stars; minimum 5 earlier reviews.</p></div><p>High risk ≥60 · Watchlist 30–59 · Low risk &lt;30. Scores are calculated on the server from current records. A score indicates suspicion, not proof of fraud.</p></article>
+        <article class="card"><h2>Database activity</h2><p>Latest 30 changes, committed with their database operations.</p><div id="audit-list"></div></article>
+      </section>
+      <footer>TrustCheck · Review integrity, made visible.<span>Local academic demo · Synthetic dataset</span></footer>
+    </div>
+  </main>
+  <dialog id="review-dialog">
+    <button class="close" data-close="review-dialog" aria-label="Close review">×</button>
+    <div id="review-detail"></div>
+    <div class="actions"><button id="dismiss">Dismiss flag</button><button id="mark-reviewed" class="primary">Mark reviewed</button><button id="delete-review" class="danger">Delete review</button></div>
+    <p id="review-error" role="alert"></p>
+  </dialog>
+  <dialog id="add-dialog">
+    <button class="close" data-close="add-dialog" aria-label="Close form">×</button>
+    <small class="eyebrow">DATABASE MANAGEMENT</small><h2>Add a review</h2><p>Create a linked record. Scores update automatically.</p>
+    <form id="review-form">
+      <label>Business<select name="businessId" id="business-select" required></select></label>
+      <label>Reviewer<select name="reviewerId" id="reviewer-select" required></select></label>
+      <label>Rating<select name="rating"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></label>
+      <label>Review text<textarea name="body" required minlength="10" maxlength="2000" placeholder="Describe the experience…"></textarea></label>
+      <p id="form-error" role="alert"></p><button class="primary" type="submit">Save review</button>
+    </form>
+  </dialog>
+  <script src="/app.js"></script>
+</body>
+</html>
