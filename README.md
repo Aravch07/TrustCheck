@@ -19,6 +19,8 @@ requirements.txt lists Flask and MySQL Connector/Python. database.sql is an opti
 
 ## Basic features
 - List reviews, 25 per page.
+- See each business's total reviews, average rating, high-risk count, unique reviewer count and reviewed count.
+- Select a business to filter the review list; selection stays active across pages.
 - Add a review for an existing business and account.
 - Search reviews and filter high-risk scores.
 - Mark a review as reviewed.

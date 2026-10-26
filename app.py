@@ -91,9 +91,19 @@ def home():
         businesses = cursor.fetchall()
         cursor.execute("SELECT id,name FROM reviewers")
         reviewers = cursor.fetchall()
+        for business in businesses:
+            items = [r for r in reviews if r["business_id"] == business["id"]]
+            business["total"] = len(items)
+            business["average"] = round(mean(r["rating"] for r in items), 1) if items else 0
+            business["high"] = sum(r["score"] >= 60 for r in items)
+            business["accounts"] = len(set(r["reviewer_id"] for r in items))
+            business["reviewed"] = sum(r["status"] == "Reviewed" for r in items)
+        selected = request.args.get("business_id", 0, type=int)
         flagged = sum(r["score"] >= 60 for r in reviews)
         search = request.args.get("search", "").lower()
         rows = [r for r in reviews if search in (r["business"] + r["reviewer"] + r["body"]).lower()]
+        if selected:
+            rows = [r for r in rows if r["business_id"] == selected]
         if request.args.get("flagged") == "yes":
             rows = [r for r in rows if r["score"] >= 60]
         page = max(1, request.args.get("page", 1, type=int))
@@ -101,7 +111,8 @@ def home():
         page = min(page, pages)
         return render_template("index.html", reviews=rows[(page-1)*25:page*25],
                                businesses=businesses, reviewers=reviewers, total=len(reviews),
-                               flagged=flagged, error=error, page=page, pages=pages)
+                               flagged=flagged, error=error, page=page, pages=pages,
+                               selected=selected, matches=len(rows))
     except mysql.connector.Error:
         return "Cannot connect to MySQL. Check that MySQL is running and .env has the correct settings.", 503
     finally:

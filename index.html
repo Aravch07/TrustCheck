@@ -23,7 +23,6 @@
 <body>
 <main>
   <h1>TrustCheck</h1>
-  <p>Review management and basic suspiciousness detection · Python + MySQL</p>
   <div class="stats">
     <section>Total reviews<b>{{ total }}</b></section>
     <section>High risk reviews<b>{{ flagged }}</b></section>
@@ -31,6 +30,16 @@
     <section>Reviewer accounts<b>{{ reviewers|length }}</b></section>
   </div>
   {% if error %}<section class="error" role="alert">{{ error }}</section>{% endif %}
+  <section>
+    <h2>Business overview</h2>
+    <div class="table"><table>
+      <tr><th>BUSINESS</th><th>TOTAL REVIEWS</th><th>AVERAGE RATING</th><th>HIGH RISK</th><th>REVIEWER ACCOUNTS</th><th>REVIEWED</th></tr>
+      {% for b in businesses %}
+      <tr><td><a href="{{ url_for('home',business_id=b.id) }}">{{ b.name }}</a></td><td>{{ b.total }}</td><td>{{ b.average }}/5</td><td>{{ b.high }}</td><td>{{ b.accounts }}</td><td>{{ b.reviewed }}</td></tr>
+      {% endfor %}
+    </table></div>
+    <p><small>Select a business name to see its reviews below.</small></p>
+  </section>
   <section>
     <h2>Add a review</h2>
     <form method="post">
@@ -47,10 +56,15 @@
   <section>
     <h2>Reviews</h2>
     <form method="get">
+      <select name="business_id" aria-label="Filter by business">
+        <option value="0">All businesses</option>
+        {% for b in businesses %}<option value="{{ b.id }}" {% if selected==b.id %}selected{% endif %}>{{ b.name }}</option>{% endfor %}
+      </select>
       <input name="search" aria-label="Search reviews" placeholder="Search reviews or businesses" value="{{ request.args.get('search','') }}">
       <label><input type="checkbox" name="flagged" value="yes" {% if request.args.get('flagged')=='yes' %}checked{% endif %}> High risk only</label>
       <button>Search</button> <a href="/">Show all</a>
     </form>
+    <p>{{ matches }} matching reviews</p>
     <p><small>High risk ≥60. Burst 25 + repeated wording 25 + rating surge 20 + repeat account 20 + rating mismatch 10.</small></p>
     <div class="table"><table>
       <tr><th>BUSINESS / REVIEW</th><th>REVIEWER</th><th>RATING</th><th>SCORE</th><th>STATUS / ACTION</th></tr>
@@ -67,9 +81,9 @@
       {% else %}<tr><td colspan="5">No matching reviews.</td></tr>{% endfor %}
     </table></div>
     <div class="pagination">
-      {% if page>1 %}<a href="{{ url_for('home',page=page-1,search=request.args.get('search',''),flagged=request.args.get('flagged','')) }}">← Previous</a>{% endif %}
+      {% if page>1 %}<a href="{{ url_for('home',page=page-1,business_id=selected,search=request.args.get('search',''),flagged=request.args.get('flagged','')) }}">← Previous</a>{% endif %}
       <span>Page {{ page }} of {{ pages }}</span>
-      {% if page<pages %}<a href="{{ url_for('home',page=page+1,search=request.args.get('search',''),flagged=request.args.get('flagged','')) }}">Next →</a>{% endif %}
+      {% if page<pages %}<a href="{{ url_for('home',page=page+1,business_id=selected,search=request.args.get('search',''),flagged=request.args.get('flagged','')) }}">Next →</a>{% endif %}
     </div>
   </section>
   <footer>Synthetic review data. Scores indicate suspicion, not proof. Wording detection uses exact matching after lowercasing and trimming.</footer>
