@@ -1,69 +1,42 @@
 # TrustCheck
 
-A review management system that combines review timing, wording, ratings, and account activity to identify suspicious patterns.
+A basic Python, HTML and MySQL review management website.
 
 ## Run
-After configuring MySQL, double-click START-TRUSTCHECK.cmd, keep the window open, and visit http://127.0.0.1:3000.
 
-Or open a terminal in this folder:
+    python -m pip install -r requirements.txt
+    python app.py
 
-    npm start
+Open http://127.0.0.1:3000. Or double-click START-TRUSTCHECK.cmd after installation. Keep the terminal open. Press Ctrl+C to stop.
 
-No build is required. After editing a browser file, refresh the browser. After editing server.js or analysis.js, stop with Ctrl+C and run npm start again.
+The existing MySQL database is reused. Settings are in the private .env file. For a fresh setup, copy .env.example to .env, enter your MySQL credentials, and import database.sql using MySQL Workbench.
 
-## Project files
+## Two code files
+- app.py: MySQL connection, SELECT/INSERT/UPDATE/DELETE, and five scoring checks.
+- index.html: the webpage with a small amount of CSS inside it. Flask fills {{ ... }} with data and repeats HTML using {% for ... %}.
 
-| File | What it does |
-| --- | --- |
-| index.html | The page layout, buttons, tables, and review form |
-| style.css | Colors, spacing, charts, and mobile layout |
-| app.js | Button actions; fetches JSON; updates the HTML |
-| server.js | Connects to MySQL and runs SELECT, INSERT, UPDATE, DELETE |
-| analysis.js | Five rules that calculate each review's score |
-| database.sql | Creates all four tables and inserts the synthetic data |
-| example-queries.sql | SQL joins, grouping, and transaction examples |
-| .env | Your private local MySQL connection settings |
-| package.json | Start command and names of the two libraries |
-| package-lock.json | Automatically records installed library versions |
-| START-TRUSTCHECK.cmd | Double-click launcher |
+requirements.txt lists Flask and MySQL Connector/Python. database.sql is an optional installation script, not needed during normal use. No npm, node_modules, React, build command, browser JSON API, or separate JavaScript/CSS files are required.
 
-Project files are stored in the root folder. npm installs dependencies automatically in node_modules.
-
-Express handles browser requests, and mysql2 connects JavaScript to MySQL. The frontend uses HTML, CSS, and JavaScript.
-
-## How it works
-1. The browser opens index.html, style.css, and app.js.
-2. app.js asks server.js for /api/data.
-3. server.js uses SELECT with JOIN to read linked records from MySQL.
-4. analysis.js scores the reviews and returns ordinary JavaScript objects.
-5. The server sends JSON; app.js fills in the page's tables and charts.
-6. Adding, updating, or deleting a review sends JSON to /api/reviews.
-7. The server validates it, executes parameterized SQL and writes an audit entry in one transaction.
-
-## Tables
-- businesses: id, name, category, city.
-- reviewers: id, name, joined.
-- reviews: id, business_id, reviewer_id, rating, body, posted, status.
-- audit: id, action, created.
-
-One business has many reviews; one reviewer has many reviews. Foreign keys prevent orphan records. Ratings must be between 1 and 5. Indexes support business/time and reviewer searches.
-
-## Full MySQL import commands
-Open MySQL Workbench and run database.sql, or use this at the mysql> prompt from the project folder:
-
-    SOURCE database.sql;
-    USE trustcheck_local;
-    SHOW TABLES;
-    SELECT COUNT(*) FROM reviews;
-
-Original dataset: 516 reviews, 96 reviewers, 8 businesses. SQL creates the tables if absent and skips duplicate seed IDs; reimport does not reset existing edits.
-
-On another laptop: install Node.js 22.13+ and MySQL 8.0.16+, run npm install, copy .env.example to .env, enter your own connection settings, import database.sql, then npm start. The password is never sent to the browser. Do not share .env.
+## Basic features
+- List reviews, 25 per page.
+- Add a review for an existing business and account.
+- Search reviews and filter high-risk scores.
+- Mark a review as reviewed.
+- Delete a review with confirmation.
+- View each score's triggered reasons.
 
 ## Scoring
-Review burst (25), similar wording (25), rating surge (20), repeat reviewer (20), and rating mismatch (10). High risk ≥60, watchlist 30–59, low risk <30.
+The program compares a review only with other reviews of the same business:
+- At least 5 other reviews within ±1 hour: 25 points.
+- At least 2 other reviews with the same text after lowercasing and trimming: 25 points.
+- Daily-window mean exceeds earlier mean by >1 star (at least 5 in both groups): 20 points.
+- At least 3 reviews of the business by one account, including this review: 20 points.
+- Rating differs from earlier mean by ≥2 stars (at least 5 earlier reviews): 10 points.
 
-The rules are commented in analysis.js. Similarity uses shared unique words divided by all unique words. Scores recompute after database changes. Dismissing a flag changes its workflow status, not the rule score.
+Earlier means more than one day before the review; the daily window is ±1 day. High risk means ≥60 points. The current review is excluded from comparison groups. These are basic rules, not a machine learning model. Scores recompute when loading a page and are not saved as fixed database columns. Mark reviewed changes workflow status only.
 
-Data is synthetic and contains a planted campaign plus repeated baseline templates. Flags are for investigation, not proof of fraud. Similar templates can cause false positives. Windows are centered on the review timestamp, so scores can use later reviews in the dataset. The activity chart shows October 2026; new reviews use the current timestamp.
+Wording matching is deliberately simplified from word-overlap similarity to exact matching. Synthetic templates may produce false positives. Timing windows can include later reviews in the dataset. Suspicion is not proof.
 
+Writes use parameterized %s placeholders. Each change and its audit entry are committed together. Foreign keys and rating constraints remain in MySQL.
+
+This is a local learning project served by Flask's development server on this laptop only.
