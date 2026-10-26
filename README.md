@@ -1,7 +1,9 @@
-# TrustCheck — simple version
+# TrustCheck
+
+A review management system that combines review timing, wording, ratings, and account activity to identify suspicious patterns.
 
 ## Run
-MySQL is already configured on this laptop. Double-click START-TRUSTCHECK.cmd, keep the window open, and visit http://127.0.0.1:3000.
+After configuring MySQL, double-click START-TRUSTCHECK.cmd, keep the window open, and visit http://127.0.0.1:3000.
 
 Or open a terminal in this folder:
 
@@ -9,7 +11,7 @@ Or open a terminal in this folder:
 
 No build is required. After editing a browser file, refresh the browser. After editing server.js or analysis.js, stop with Ctrl+C and run npm start again.
 
-## Files to explain to your professor
+## Project files
 
 | File | What it does |
 | --- | --- |
@@ -25,11 +27,11 @@ No build is required. After editing a browser file, refresh the browser. After e
 | package-lock.json | Automatically records installed library versions |
 | START-TRUSTCHECK.cmd | Double-click launcher |
 
-All project files are in this folder. node_modules is the only subfolder. It is installed automatically and does not contain code you need to explain.
+Project files are stored in the root folder. npm installs dependencies automatically in node_modules.
 
-Only two libraries are used: Express handles browser requests; mysql2 connects JavaScript to MySQL. There is no React, TypeScript, Vite, Cloudflare, CSS framework, or compilation.
+Express handles browser requests, and mysql2 connects JavaScript to MySQL. The frontend uses HTML, CSS, and JavaScript.
 
-## Explain the flow
+## How it works
 1. The browser opens index.html, style.css, and app.js.
 2. app.js asks server.js for /api/data.
 3. server.js uses SELECT with JOIN to read linked records from MySQL.
@@ -47,10 +49,9 @@ Only two libraries are used: Express handles browser requests; mysql2 connects J
 One business has many reviews; one reviewer has many reviews. Foreign keys prevent orphan records. Ratings must be between 1 and 5. Indexes support business/time and reviewer searches.
 
 ## Full MySQL import commands
-The existing database is reused; no records are deleted during conversion.
-For a new installation, open MySQL Workbench and run database.sql, or use this at the mysql> prompt:
+Open MySQL Workbench and run database.sql, or use this at the mysql> prompt from the project folder:
 
-    SOURCE C:/Users/aravc/OneDrive/Desktop/SkillLab3/database.sql;
+    SOURCE database.sql;
     USE trustcheck_local;
     SHOW TABLES;
     SELECT COUNT(*) FROM reviews;
@@ -66,5 +67,3 @@ The rules are commented in analysis.js. Similarity uses shared unique words divi
 
 Data is synthetic and contains a planted campaign plus repeated baseline templates. Flags are for investigation, not proof of fraud. Similar templates can cause false positives. Windows are centered on the review timestamp, so scores can use later reviews in the dataset. The activity chart shows October 2026; new reviews use the current timestamp.
 
-## Backup
-The earlier React/TypeScript version is preserved separately on the Desktop in SkillLab3-Previous. This simple project uses the same MySQL database, trustcheck_local.
