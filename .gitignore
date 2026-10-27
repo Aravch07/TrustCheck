@@ -5,3 +5,6 @@ __pycache__/
 .space-build/
 ml/training_data.csv
 .vercel/
+
+.vercel
+.env*
