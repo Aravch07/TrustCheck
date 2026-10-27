@@ -1,12 +1,14 @@
-"""Run: python -m unittest test_model -v"""
+"""Run: python -m unittest discover -s ml -p test_model.py -v"""
 import json
 import subprocess
+import shutil
 import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
+import sys
+ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT))
 from ml_model import feature_rows, predict
-
-ROOT=Path(__file__).parent
 
 
 class ModelTests(unittest.TestCase):
@@ -33,15 +35,16 @@ class ModelTests(unittest.TestCase):
         self.assertEqual(rows,feature_rows(labeled,reviewers))
 
     def test_business_splits_are_disjoint(self):
-        report=json.loads((ROOT/"metrics.json").read_text())
+        report=json.loads((ROOT/"ml/metrics.json").read_text())
         train=set(report["train_groups"])
         validation=set(report["validation_groups"])
         test=set(report["test_groups"])
         self.assertFalse(train & validation or train & test or validation & test)
         self.assertEqual(len(train|validation|test),180)
 
+    @unittest.skipUnless(shutil.which("node"), "Install Node.js only if you want to run the browser-parity test.")
     def test_browser_matches_python(self):
-        source=(ROOT/"huggingface-space/space.js").read_text()
+        source=(ROOT/"deployment/space/space.js").read_text()
         function=source[source.index("function predict(values)"):source.index("function showPrediction()")]
         examples=[[0,.2,0,400,.5,0],[15,.92,3,8,2,1.7],[0,0,0,0,0,0],[2,.5,1,50,1,-1]]
         script="const model="+(ROOT/"model.json").read_text()+";"+function
@@ -50,12 +53,13 @@ class ModelTests(unittest.TestCase):
         for row,browser in zip(examples,json.loads(result.stdout)):
             self.assertAlmostEqual(predict(row)["probability"],browser,places=12)
 
+    @unittest.skipUnless((ROOT/".space-build/demo_data.json").exists(), "Run python deployment/build_demo.py to prepare the snapshot.")
     def test_snapshot_has_only_seed_ids(self):
-        data=json.loads((ROOT/"huggingface-space/demo_data.json").read_text())
+        data=json.loads((ROOT/".space-build/demo_data.json").read_text())
         self.assertTrue(all(1<=r["id"]<=516 for r in data["reviews"]))
         self.assertEqual(len(data["reviews"]),516)
         self.assertNotIn("password",json.dumps(data).lower())
-        self.assertFalse((ROOT/"huggingface-space/.env").exists())
+        self.assertFalse((ROOT/".space-build/.env").exists())
 
 
 if __name__=="__main__":

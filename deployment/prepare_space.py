@@ -1,17 +1,20 @@
 """Exports only the original synthetic review IDs; never exports credentials."""
 import json
-import shutil
 from datetime import datetime, timezone, date
 from pathlib import Path
 import mysql.connector
+import sys
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 from app import settings, check_reviews
 from ml_model import apply_model
+from build_demo import build
 
-ROOT = Path(__file__).parent
-SPACE = ROOT/"huggingface-space"
+SPACE = ROOT/".space-build"
 
 
 def prepare():
+    build(fetch_snapshot=False)
     connection = mysql.connector.connect(
         host=settings.get("MYSQL_HOST","127.0.0.1"),port=int(settings.get("MYSQL_PORT",3306)),
         user=settings.get("MYSQL_USER","root"),password=settings.get("MYSQL_PASSWORD",""),
@@ -35,9 +38,6 @@ def prepare():
         (SPACE/"demo_data.json").write_text(json.dumps(snapshot,default=encode),encoding="utf-8")
     finally:
         connection.close()
-    for name in ["model.json","metrics.json","train_model.py","ml_model.py","training_data.csv","MODEL_CARD.md"]:
-        shutil.copyfile(ROOT/name,SPACE/name)
-    (SPACE/"requirements.txt").write_text("scikit-learn==1.9.0\nnumpy>=2.0,<3\n")
     print("Prepared Space:",len(reviews),"synthetic reviews. No .env or database credentials copied.")
 
 

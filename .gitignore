@@ -2,3 +2,6 @@
 __pycache__/
 .venv/
 *.log
+.space-build/
+ml/training_data.csv
+.vercel/

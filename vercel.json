@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "python3 deployment/build_demo.py",
+  "installCommand": "echo No installation required for the static demo",
+  "outputDirectory": ".space-build"
+}

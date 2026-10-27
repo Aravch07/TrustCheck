@@ -315,30 +315,32 @@ Deployment uses explicit file allowlists. MySQL passwords and Hugging Face token
 
 ## 9. Current repository responsibilities
 
-- app.py: routing, database operations, rules, ML integration, summaries, filtering, pagination.
-- index.html: local page, forms, tables, explanations, inline styles.
-- ml_model.py: earlier-only features, transformations, JSON inference, contributions.
-- train_model.py: simulator, labels, grouped splits, training, threshold selection, evaluation, exports.
-- model.json: active coefficients, scaling statistics, feature order, intercept, threshold, version.
-- metrics.json: results, split IDs/counts, baseline, limitations.
-- training_data.csv: numeric examples, labels, groups, partition labels.
-- MODEL_CARD.md: intended use, provenance, methodology, evaluation, limitations.
-- test_model.py: history causality, label independence, disjoint partitions, Python/browser parity, snapshot checks.
-- prepare_space.py: synthetic seed export and hosted-asset preparation.
-- deploy_huggingface.py: account verification and allowlisted Space/model uploads.
-- HF-LOGIN.cmd: local interactive authentication.
-- huggingface-space/index.html: hosted predictor, explorer, metrics, disclosures.
-- huggingface-space/space.js: browser inference, explanations, summaries, filters, pagination.
-- huggingface-space/demo_data.json: dated synthetic snapshot.
-- huggingface-space/README.md: static-Space configuration and description.
-- Other model/training/report files copied into huggingface-space/: public downloads matching the prepared release.
-- database.sql: schema and original seed INSERT statements.
-- requirements.txt: Flask/MySQL runtime dependencies.
-- requirements-ml.txt: training/deployment dependencies.
+The repository separates the everyday app from supporting training, deployment and documentation files:
+
+- app.py: local routing, MySQL, rules, model integration, business summaries and review management.
+- index.html: local webpage, inline styles, forms, tables and explanations.
+- ml_model.py: chronological feature extraction and JSON model inference.
+- model.json: learned parameters required by local inference.
+- database.sql: schema and synthetic seed records.
+- ml/train_model.py: reproducible simulation, grouped splits, training and evaluation.
+- ml/metrics.json: committed evaluation report.
+- ml/test_model.py: model invariants and browser parity checks.
+- ml/requirements.txt: offline training/deployment dependencies.
+- ml/training_data.csv: generated dataset, kept locally and ignored by Git; published separately on Hugging Face.
+- deployment/build_demo.py: assembles a static demo without MySQL using a pinned public snapshot.
+- deployment/prepare_space.py: refreshes the seed snapshot from local MySQL and assembles the package.
+- deployment/deploy_huggingface.py: uploads the package and model artifacts using allowlists.
+- deployment/HF-LOGIN.cmd: local Hugging Face authentication.
+- deployment/space/: canonical HTML, JavaScript and configuration for the hosted demo.
+- .space-build/: generated complete static package, ignored by Git.
+- docs/MODEL_CARD.md: intended use, methodology, results and limitations.
+- docs/HOSTING.md: Vercel/Hugging Face options and live-database requirements.
+- docs/prd.md: this product specification.
+- vercel.json: read-only static-demo build configuration, not a hosted Flask/MySQL backend.
+- requirements.txt: local Flask/MySQL runtime dependencies.
 - START-TRUSTCHECK.cmd: local launcher.
-- .gitignore: excludes secrets, caches, virtual environment, logs.
-- README.md: setup, features, training, deployment instructions.
-- prd.md: this current product specification.
+- README.md: concise entry point and commands.
+- .gitignore: excludes credentials, generated packages/datasets, caches, environment and logs.
 
 ## 10. Operations and maintenance
 
@@ -353,18 +355,18 @@ The import uses CREATE IF NOT EXISTS and INSERT IGNORE. It does not reset edits,
 
 ### Train and test
 
-    python -m pip install -r requirements-ml.txt
-    python train_model.py
-    python -m unittest test_model -v
+    python -m pip install -r ml/requirements.txt
+    python ml/train_model.py
+    python -m unittest discover -s ml -p test_model.py -v
 
 Training overwrites model.json, metrics.json, and training_data.csv. Review artifacts before publication. Website startup and review submission do not retrain weights.
 
 ### Prepare and publish
 
-    python prepare_space.py
-    python deploy_huggingface.py
+    python deployment/prepare_space.py
+    python deployment/deploy_huggingface.py
 
-Authenticate with HF-LOGIN.cmd first. The configured account is Uniworld7. Export requires local MySQL; deployment uploads prepared files. Training alone does not refresh hosted scores.
+Authenticate with deployment/HF-LOGIN.cmd first. The configured account is Uniworld7. Export requires local MySQL; deployment uploads prepared files. Training alone does not refresh hosted scores.
 
 GitHub source synchronization is separate from Hugging Face deployment. A GitHub push alone does not run the configured Space-upload script.
 

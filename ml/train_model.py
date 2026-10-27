@@ -4,6 +4,13 @@ import json
 import random
 from datetime import datetime, timedelta
 from pathlib import Path
+import sys
+
+ROOT = Path(__file__).resolve().parent
+if not (ROOT / "ml_model.py").exists():
+    ROOT = ROOT.parent
+OUTPUT = ROOT / "ml" if (ROOT / "ml").is_dir() else ROOT
+sys.path.insert(0, str(ROOT))
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
@@ -12,7 +19,6 @@ from sklearn.metrics import (accuracy_score, precision_score, recall_score,
 from sklearn.dummy import DummyClassifier
 from ml_model import FEATURES, LOG_FEATURES, feature_rows, transform, predict
 
-ROOT = Path(__file__).parent
 SEED = 271026
 
 
@@ -116,8 +122,8 @@ def main():
                 "Causal features use only preceding timestamps/IDs; very early campaign reviews may be missed.",
                 "Desktop seeded dataset differs from the training simulator and has no complete verified labels."]}
     (ROOT/"model.json").write_text(json.dumps(model,indent=2))
-    (ROOT/"metrics.json").write_text(json.dumps(report,indent=2))
-    with (ROOT/"training_data.csv").open("w",newline="") as file:
+    (OUTPUT/"metrics.json").write_text(json.dumps(report,indent=2))
+    with (OUTPUT/"training_data.csv").open("w",newline="") as file:
         writer=csv.writer(file);writer.writerow(["business_group","split",*FEATURES,"label"])
         for row,label,group in zip(X,y,groups):
             split="train" if group in train_groups else "validation" if group in validation_groups else "test"

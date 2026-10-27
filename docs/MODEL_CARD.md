@@ -67,9 +67,9 @@ Feature contributions are coefficient × standardized value in log-odds units, r
 - Scores are not probability-calibrated against a real deployment population.
 
 ## Reproduce
-Install requirements-ml.txt in the main project, then run python train_model.py. This creates model.json, metrics.json and training_data.csv. The last file includes explicit split labels. Keep the held-out test split out of model fitting and threshold selection.
+Install ml/requirements.txt in the main project, then run python ml/train_model.py. This creates model.json, metrics.json and training_data.csv. The last file includes explicit split labels. Keep the held-out test split out of model fitting and threshold selection.
 
 The local website uses MySQL. The Hugging Face static Space uses a read-only export restricted to the original synthetic seed review IDs; it has no access to laptop MySQL or its password.
 
 ## Versions
-Python 3.13, scikit-learn 1.9.0. See requirements-ml.txt for dependency constraints. Standard logistic regression, CPU only.
+Python 3.13, scikit-learn 1.9.0. See ml/requirements.txt for dependency constraints. Standard logistic regression, CPU only.

@@ -1,80 +1,71 @@
 # TrustCheck
 
-A Python, HTML and MySQL review management website with an explainable trained ML model.
+Review management with Python, MySQL, and an explainable machine learning model.
 
-## Run
+[Live demo](https://huggingface.co/spaces/Uniworld7/TrustCheck) · [Trained model](https://huggingface.co/Uniworld7/TrustCheck-Model) · [Product specification](docs/prd.md) · [Hosting guide](docs/HOSTING.md)
+
+## What it does
+
+- View reviews and compare business totals, average ratings, and suspicious activity.
+- Search by business, reviewer, or review text.
+- Add, mark reviewed, and delete records in local MySQL.
+- Compare explicit rule scores with learned ML estimates and see contributing factors.
+- Try the model online using a read-only synthetic-data snapshot.
+
+## Run on your laptop
 
     python -m pip install -r requirements.txt
     python app.py
 
-Open http://127.0.0.1:3000. Or double-click START-TRUSTCHECK.cmd after installation. Keep the terminal open. Press Ctrl+C to stop.
+Open http://127.0.0.1:3000. MySQL must be running. Keep the terminal open; Ctrl+C stops the server. You can also double-click START-TRUSTCHECK.cmd.
 
-The existing MySQL database is reused. Settings are in the private .env file. For a fresh setup, copy .env.example to .env, enter your MySQL credentials, and import database.sql using MySQL Workbench.
+For a fresh setup, copy .env.example to .env, enter your own MySQL credentials, and import database.sql in MySQL Workbench. Never commit .env. No npm or frontend build is required for the local application.
 
-## Website and model files
-- app.py: MySQL connection, SELECT/INSERT/UPDATE/DELETE, five rule checks, and model integration.
-- index.html: the webpage with a small amount of CSS inside it. Flask fills {{ ... }} with data and repeats HTML using {% for ... %}.
-- ml_model.py: shared feature extraction and learned-model predictions.
-- model.json: fitted logistic regression weights and scaling statistics.
-- train_model.py: reproducible synthetic-data generation, model training and evaluation.
-- training_data.csv: 15,300 labeled synthetic examples, including their train/validation/test split.
-- metrics.json and MODEL_CARD.md: evaluation results, methodology and limitations.
-- huggingface-space/: static Space source, the same exported model, and a read-only seed-data snapshot.
+## Repository map
 
-requirements.txt lists Flask and MySQL Connector/Python. database.sql is an optional installation script, not needed during normal use. No npm, node_modules, React, build command, browser JSON API, or separate JavaScript/CSS files are required.
+    app.py                  Flask routes and MySQL operations
+    index.html              Local webpage and styles
+    ml_model.py             Features and trained-model inference
+    model.json              Learned weights used by the website
+    database.sql            Schema and original synthetic seed data
+    requirements.txt        Local app dependencies
+    ml/                     Training code, evaluation and tests
+    deployment/             Hosting tools and static website source
+    docs/                   Model card, PRD and hosting instructions
 
-## Basic features
-- List reviews, 25 per page.
-- See each business's total reviews, average rating, high-risk count, unique reviewer count and reviewed count.
-- Select a business to filter the review list; selection stays active across pages.
-- Add a review for an existing business and account.
-- Search reviews and filter high-risk scores.
-- Mark a review as reviewed.
-- Delete a review with confirmation.
-- View each score's triggered reasons.
+Generated training CSVs and assembled deployment packages stay on your laptop and are ignored by Git. The published model, dataset and demo remain available on Hugging Face. The backup before this cleanup is separate from the repository.
 
-## Rule scoring
-The program compares a review only with other reviews of the same business:
-- At least 5 other reviews within ±1 hour: 25 points.
-- At least 2 other reviews with the same text after lowercasing and trimming: 25 points.
-- Daily-window mean exceeds earlier mean by >1 star (at least 5 in both groups): 20 points.
-- At least 3 reviews of the business by one account, including this review: 20 points.
-- Rating differs from earlier mean by ≥2 stars (at least 5 earlier reviews): 10 points.
+## Model
 
-Earlier means more than one day before the review; the daily window is ±1 day. High risk means ≥60 points. The current review is excluded from comparison groups. These are basic rules, not a machine learning model. Scores recompute when loading a page and are not saved as fixed database columns. Mark reviewed changes workflow status only.
+Logistic regression uses six features: previous-hour volume, wording similarity, repeated account activity, account age, rating deviation, and recent rating rise.
 
-## Machine learning
-The ML estimate is separate from the rule score. Logistic regression learns six feature weights from simulated campaign membership labels. The labels are not generated by thresholding the rules.
+Training uses 15,300 simulated reviews, with businesses/accounts separated across train, validation and test. Synthetic test precision is 88.64%, recall 88.40%, and F1 0.8852. These numbers do not establish real-world fraud performance. Estimates are uncalibrated and recommend human investigation, not automatic removal.
 
-Features: prior-hour review count, prior seven-day maximum wording similarity, prior account/business review count, account age, rating deviation from previous mean, and recent rating rise. Features use earlier records only, ordered by timestamp and ID.
+Read [the model card](docs/MODEL_CARD.md) and [evaluation report](ml/metrics.json) for definitions and limitations. The separate weighted rules are not the ML model and are not its training labels.
 
-The generator creates 180 businesses and 15,300 reviews. Businesses and account IDs are separated across train/validation/test (60/20/20). Scaling fits on train only; the decision threshold is selected on validation. The untouched synthetic test set achieves precision 0.8864, recall 0.8840, F1 0.8852 and ROC-AUC 0.9687. These results do not establish real-world fraud accuracy. Predictions are not calibrated real-world fraud probabilities.
+## Retrain and test
 
-To retrain:
+    python -m pip install -r ml/requirements.txt
+    python ml/train_model.py
+    python -m unittest discover -s ml -p test_model.py -v
 
-    python -m pip install -r requirements-ml.txt
-    python train_model.py
-    python -m unittest test_model -v
+Training writes model.json, ml/metrics.json, and the locally ignored ml/training_data.csv. Review evaluation before deploying a replacement. Browser-parity tests use Node.js if installed; running the local website does not require Node.js.
 
-Local inference needs only Python's standard library in addition to the existing Flask/MySQL libraries. The model is plain JSON, not a pickle. Feature contributions are in log-odds units relative to the training mean; positive values increase the estimate.
+## Host online
 
-## Hugging Face deployment
-- Space: https://huggingface.co/spaces/Uniworld7/TrustCheck
-- Model: https://huggingface.co/Uniworld7/TrustCheck-Model
+**Hugging Face:** already deployed at the live-demo link above. It runs the learned formula in the browser, without accessing laptop MySQL.
 
-The Space runs the learned formula in browser JavaScript with predictions numerically checked against Python. It is a static Space, so no Python server, paid compute or database credentials are deployed. It is not a live connection to laptop MySQL.
+**Vercel:** the repository includes vercel.json for the same read-only static demo. Import Aravch07/TrustCheck, select Other as the framework, keep the repository root, and deploy. The configuration builds .space-build using Python standard-library tools and a pinned published snapshot. No database secrets are needed for this mode.
 
-To refresh the seed-data snapshot and deploy:
+The current Vercel configuration deliberately hosts the model demo, not the Flask/MySQL editor. A full online database app needs hosted MySQL and server-side credentials. See [hosting options](docs/HOSTING.md).
 
-    python prepare_space.py
-    python deploy_huggingface.py
+## Refresh Hugging Face
 
-Sign in locally with HF-LOGIN.cmd first. It uses the Hugging Face token cache outside the repository. Never paste a token into code or commit it. Deployment uploads an explicit allowlist; .env is excluded. Snapshot exports are restricted to original synthetic review IDs 1–516 and omit the audit table.
+Sign in locally using deployment/HF-LOGIN.cmd, then:
 
-Hugging Face documentation: https://huggingface.co/docs/hub/spaces-overview
+    python deployment/prepare_space.py
+    python deployment/deploy_huggingface.py
 
-Wording matching is deliberately simplified from word-overlap similarity to exact matching. Synthetic templates may produce false positives. Timing windows can include later reviews in the dataset. Suspicion is not proof.
+Export uses local MySQL and restricts records to original synthetic seed IDs. Review data before publication. If you only need to rebuild the existing public demo, run python deployment/build_demo.py; that path needs no MySQL connection.
 
-Writes use parameterized %s placeholders. Each change and its audit entry are committed together. Foreign keys and rating constraints remain in MySQL.
-
-This is a local learning project served by Flask's development server on this laptop only.
+After retraining, prepare and publish a matching snapshot, then update the pinned REVISION in deployment/build_demo.py to the new Hugging Face Space commit before a Vercel build. This prevents mixing stale snapshot predictions with new weights.
