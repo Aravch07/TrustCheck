@@ -23,6 +23,7 @@
 <body>
 <main>
   <h1>TrustCheck</h1>
+  <p><b>ML model:</b> Logistic regression trained on labeled synthetic campaigns. ML estimates and rule scores are shown separately; neither proves fraud.</p>
   <div class="stats">
     <section>Total reviews<b>{{ total }}</b></section>
     <section>High risk reviews<b>{{ flagged }}</b></section>
@@ -33,9 +34,9 @@
   <section>
     <h2>Business overview</h2>
     <div class="table"><table>
-      <tr><th>BUSINESS</th><th>TOTAL REVIEWS</th><th>AVERAGE RATING</th><th>HIGH RISK</th><th>REVIEWER ACCOUNTS</th><th>REVIEWED</th></tr>
+      <tr><th>BUSINESS</th><th>TOTAL REVIEWS</th><th>AVERAGE RATING</th><th>HIGH RISK (RULES)</th><th>ML FLAGS</th><th>REVIEWER ACCOUNTS</th><th>REVIEWED</th></tr>
       {% for b in businesses %}
-      <tr><td><a href="{{ url_for('home',business_id=b.id) }}">{{ b.name }}</a></td><td>{{ b.total }}</td><td>{{ b.average }}/5</td><td>{{ b.high }}</td><td>{{ b.accounts }}</td><td>{{ b.reviewed }}</td></tr>
+      <tr><td><a href="{{ url_for('home',business_id=b.id) }}">{{ b.name }}</a></td><td>{{ b.total }}</td><td>{{ b.average }}/5</td><td>{{ b.high }}</td><td>{{ b.ml_high }}</td><td>{{ b.accounts }}</td><td>{{ b.reviewed }}</td></tr>
       {% endfor %}
     </table></div>
     <p><small>Select a business name to see its reviews below.</small></p>
@@ -67,18 +68,19 @@
     <p>{{ matches }} matching reviews</p>
     <p><small>High risk ≥60. Burst 25 + repeated wording 25 + rating surge 20 + repeat account 20 + rating mismatch 10.</small></p>
     <div class="table"><table>
-      <tr><th>BUSINESS / REVIEW</th><th>REVIEWER</th><th>RATING</th><th>SCORE</th><th>STATUS / ACTION</th></tr>
+      <tr><th>BUSINESS / REVIEW</th><th>REVIEWER</th><th>RATING</th><th>RULE SCORE</th><th>ML ESTIMATE</th><th>STATUS / ACTION</th></tr>
       {% for r in reviews %}
       <tr>
         <td><b>{{ r.business }}</b><p>{{ r.body }}</p><small>#{{ r.id }} · {{ r.posted }}</small></td>
         <td>{{ r.reviewer }}</td><td>{{ r.rating }}/5</td>
         <td class="{{ 'high' if r.score>=60 else '' }}"><b>{{ r.score }}/100</b><details><summary>Reasons</summary>{% for name,points in r.signals %}<p>{{ name }} +{{ points }}</p>{% else %}<p>No rules triggered.</p>{% endfor %}</details></td>
+        <td><b>{{ r.ml_score }}%</b><p>{{ 'Flagged' if r.ml_suspicious else 'Not flagged' }}</p><details><summary>ML factors</summary>{% for factor in r.ml_reasons %}<p>{{ factor.feature }} = {{ factor.value }} ({{ '%+.3f'|format(factor.effect) }} log-odds)</p>{% endfor %}<p>Positive effects increase the model estimate; negative effects reduce it.</p></details></td>
         <td>{{ r.status }}<br>
           {% if r.status!='Reviewed' %}<form method="post"><input type="hidden" name="action" value="reviewed"><input type="hidden" name="id" value="{{ r.id }}"><button>Mark reviewed</button></form>{% endif %}
           <form method="post" onsubmit="return confirm('Delete this review?')"><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="{{ r.id }}"><button class="delete">Delete</button></form>
         </td>
       </tr>
-      {% else %}<tr><td colspan="5">No matching reviews.</td></tr>{% endfor %}
+      {% else %}<tr><td colspan="6">No matching reviews.</td></tr>{% endfor %}
     </table></div>
     <div class="pagination">
       {% if page>1 %}<a href="{{ url_for('home',page=page-1,business_id=selected,search=request.args.get('search',''),flagged=request.args.get('flagged','')) }}">← Previous</a>{% endif %}

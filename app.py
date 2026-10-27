@@ -3,6 +3,7 @@ import mysql.connector
 from datetime import datetime, timedelta, timezone
 from statistics import mean
 from pathlib import Path
+from ml_model import apply_model
 
 # Read the existing private MySQL settings.
 folder = Path(__file__).parent
@@ -89,8 +90,9 @@ def home():
         check_reviews(reviews)
         cursor.execute("SELECT id,name FROM businesses")
         businesses = cursor.fetchall()
-        cursor.execute("SELECT id,name FROM reviewers")
+        cursor.execute("SELECT id,name,joined FROM reviewers")
         reviewers = cursor.fetchall()
+        apply_model(reviews, reviewers)
         for business in businesses:
             items = [r for r in reviews if r["business_id"] == business["id"]]
             business["total"] = len(items)
@@ -98,6 +100,7 @@ def home():
             business["high"] = sum(r["score"] >= 60 for r in items)
             business["accounts"] = len(set(r["reviewer_id"] for r in items))
             business["reviewed"] = sum(r["status"] == "Reviewed" for r in items)
+            business["ml_high"] = sum(r["ml_suspicious"] for r in items)
         selected = request.args.get("business_id", 0, type=int)
         flagged = sum(r["score"] >= 60 for r in reviews)
         search = request.args.get("search", "").lower()

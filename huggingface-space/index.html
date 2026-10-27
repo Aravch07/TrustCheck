@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TrustCheck ML</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f8f3;color:#29452f;font:15px Arial,sans-serif}main{max-width:1150px;margin:auto;padding:32px 20px}h1{font-size:34px;margin-bottom:8px}p{line-height:1.65;color:#75836d}h2{font-size:21px}.badge{display:inline-block;padding:5px 10px;background:#e4efdf;color:#547345;border-radius:20px;font-size:11px}.card{background:white;border:1px solid #dce5d6;border-radius:10px;padding:22px;margin:20px 0}.notice{padding:13px 18px;background:#fff3db;border-radius:7px;color:#937245;font-size:13px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.grid label{font-size:12px;line-height:1.5}input,select,button{font:inherit;padding:10px;border:1px solid #d2dfc9;border-radius:5px}input{display:block;width:100%;margin-top:7px}button{background:#3b6947;color:white;cursor:pointer}button:disabled{opacity:.5;cursor:wait}button.light{background:#edf3e8;color:#3b6947}.actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.stat{padding:20px;background:white;border:1px solid #dce5d6;border-radius:9px;font-size:12px;color:#7d8d74}.stat strong{display:block;font-size:28px;color:#315b3c;margin-top:10px}.table{overflow:auto}table{border-collapse:collapse;width:100%;text-align:left}th{font-size:11px;color:#7e9074}td,th{padding:12px 9px;border-bottom:1px solid #edf1e8;vertical-align:top}td{font-size:12px}td p{max-width:380px;margin:8px 0}.high{color:#b37643}#result strong{font-size:30px}.effect{display:flex;justify-content:space-between;gap:14px;border-bottom:1px solid #e9eee2;padding:12px 0;font-size:13px}a{color:#487a4f}summary{cursor:pointer;font-size:11px}footer{font-size:12px;color:#90a083;margin:30px 0}#status{font-size:13px}.metric-note{font-size:12px}.filter{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.filter input{width:230px;margin:0}@media(max-width:700px){.grid,.stats{grid-template-columns:1fr 1fr}.card{padding:17px}h1{font-size:28px}}
+</style>
+</head>
+<body><main>
+<span class="badge">TRAINED MACHINE LEARNING MODEL</span>
+<h1>TrustCheck</h1><p>Explore review behavior and estimate suspicious activity with an explainable logistic regression model.</p>
+<div class="notice">Academic ML demonstration trained only on simulated campaigns. Estimates are not calibrated real-world fraud probabilities. The hosted dataset is a read-only synthetic snapshot; the local project uses MySQL.</div>
+<p id="status" role="status">Loading model and dataset…</p>
+<div class="stats" id="stats"></div>
+<section class="card"><h2>Try the trained model</h2><p>Enter the six behavioral features of a review. No review text or input values are sent to a server; prediction runs in your browser using the exported Python-trained weights.</p>
+<form id="predict">
+<div class="grid">
+<label>Other reviews in the previous hour<input id="f0" type="number" min="0" max="500" value="15" required></label>
+<label>Highest wording similarity (0–1)<input id="f1" type="number" min="0" max="1" step=".01" value=".92" required></label>
+<label>Earlier reviews by this account of the same business<input id="f2" type="number" min="0" max="100" value="3" required></label>
+<label>Account age in days<input id="f3" type="number" min="0" max="10000" step=".1" value="8" required></label>
+<label>Absolute rating deviation from earlier mean (0–4)<input id="f4" type="number" min="0" max="4" step=".01" value="2" required></label>
+<label>Recent rating rise versus earlier baseline (−4 to 4)<input id="f5" type="number" min="-4" max="4" step=".01" value="1.7" required></label>
+</div>
+<div class="actions"><button id="analyze" disabled>Analyze review</button><button type="button" class="light" id="ordinary">Ordinary example</button><button type="button" class="light" id="campaign">Campaign example</button></div>
+</form><div id="result" aria-live="polite"></div>
+<p class="metric-note">Similarity is Jaccard overlap of distinct words of at least three letters, against earlier reviews of the same business in the previous seven days. Rating rise requires ≥2 prior-day and ≥5 older reviews; missing historical quantities use zero.</p>
+</section>
+<section class="card"><h2>Business overview</h2><p>Explore the snapshot exported from the project's local MySQL database.</p><div class="table" id="businesses"></div></section>
+<section class="card"><h2>Reviews and model estimates</h2><div class="filter"><select id="business" aria-label="Choose business"></select><input id="search" aria-label="Search reviews" placeholder="Search review text…"><label><input id="only-flags" type="checkbox" style="display:inline;width:auto"> ML flags only</label></div><p id="match-count"></p><div class="table" id="reviews"></div><div class="actions"><button id="prev" class="light">Previous</button><span id="page"></span><button id="next" class="light">Next</button></div></section>
+<section class="card"><h2>Training and evaluation</h2><div id="metrics"></div><p>Labels come from the simulator's known campaign membership—not the old rule score. Training, validation and test contain separate businesses and separate reviewer accounts. The threshold is selected on validation data, then evaluated once on the untouched test set.</p><p>Common synthetic phrase templates can occur in multiple splits. Scores may miss early campaign reviews and can falsely flag genuine bursts. The real-world performance of this model is unknown.</p><p><a href="MODEL_CARD.md" target="_blank" rel="noopener">Model card</a> · <a href="train_model.py" download>Python training code</a> · <a href="ml_model.py" download>Python feature and inference code</a> · <a href="model.json" download>Trained model weights</a> · <a href="training_data.csv" download>Labeled training dataset</a> · <a href="metrics.json" download>Evaluation report</a></p></section>
+<footer>TrustCheck · Logistic regression · Synthetic data · Human review required</footer>
+</main><script src="space.js"></script></body></html>
